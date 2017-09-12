@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.script.Invocable;
@@ -28,6 +29,11 @@ import org.json.simple.parser.ParseException;
  * @author Todor Balabanov
  */
 public class Main {
+
+	/**
+	 * Pseudo-random number generator.
+	 */
+	private final static Random PRNG = new Random();
 
 	/**
 	 * Application single entry point method.
@@ -122,9 +128,10 @@ public class Main {
 		/*
 		 * Recalculate shares in pixels.
 		 */
-		List<Integer> areas = new ArrayList<Integer>();
+		int index = 0;
+		int areas[] = new int[shares.size()];
 		for (Double share : shares) {
-			areas.add((int) Math.round(share * area / 100D));
+			areas[index++] = (int) Math.round(share * area / 100D);
 		}
 
 		/*
@@ -135,6 +142,52 @@ public class Main {
 			g.drawLine(pipes.get(k).x, pipes.get(k).y, pipes.get(k).x, pipes.get(k).y);
 		}
 
+		/*
+		 * Flood image.
+		 */
+		for (int a = /*area - shares.size()*/63; a >= 0; a--) {
+			for (Color color : colors) {
+				/*
+				 * Find random proper pixel to flood.
+				 */
+				while (true) {
+					int i = PRNG.nextInt(output.getWidth());
+					int j = PRNG.nextInt(output.getHeight());
+
+					/*
+					 * Only black pixels can be converted to color pixels.
+					 */
+					if (output.getRGB(i, j) != Color.BLACK.getRGB()) {
+						continue;
+					}
+
+					if (i > 0 && output.getRGB(i - 1, j) == color.getRGB()) {
+						g.setColor(color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (j > 0 && output.getRGB(i, j - 1) == color.getRGB()) {
+						g.setColor(color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (i < output.getWidth() - 1 && output.getRGB(i + 1, j) == color.getRGB()) {
+						g.setColor(color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (j < output.getHeight() - 1 && output.getRGB(i, j + 1) == color.getRGB()) {
+						g.setColor(color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+				}
+			}
+		}
+
+		/*
+		 * Store current image in an image file.
+		 */
 		ImageIO.write((RenderedImage) output, "png", new File("./bin/out.png"));
 	}
 
