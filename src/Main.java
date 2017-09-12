@@ -47,7 +47,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in01.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in02.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -97,7 +97,7 @@ public class Main {
 		/*
 		 * Save result.
 		 */
-		BufferedImage output = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+		BufferedImage output = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
 		Graphics g = output.getGraphics();
 
 		/*
