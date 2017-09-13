@@ -31,9 +31,66 @@ import org.json.simple.parser.ParseException;
 public class Main {
 
 	/**
+	 * Pipe description.
+	 * 
+	 * @author Todor Balabanov
+	 */
+	private static class Pipe {
+		/**
+		 * Area visualization color.
+		 */
+		public Color color = Color.WHITE;
+
+		/**
+		 * Location of the pipe is in the middle of the polygon side.
+		 */
+		public Point location = new Point(0, 0);
+
+		/**
+		 * First vertex of the polygon side.
+		 */
+		public Point vertex1 = new Point(0, 0);
+
+		/**
+		 * Second vertex of the polygon side.
+		 */
+		public Point vertex2 = new Point(0, 0);
+
+		/**
+		 * Pipe share in percentage of the total amount.
+		 */
+		public double share = 0;
+
+		/**
+		 * Maximum allowed area in pixels.
+		 */
+		public int area = 0;
+
+		/**
+		 * Current occupied area in pixels.
+		 */
+		public int occupied = 0;
+
+		/**
+		 * List of color flood candidate pixels.
+		 */
+		public List<Point> candidates = new ArrayList<Point>();
+	}
+
+	/**
 	 * Pseudo-random number generator.
 	 */
 	private final static Random PRNG = new Random();
+
+	/**
+	 * List of pipes.
+	 */
+	private static List<Pipe> pipes = new ArrayList<Pipe>();
+
+	/**
+	 * Output image for results reporting.
+	 */
+	private static BufferedImage output = null;
 
 	/**
 	 * Application single entry point method.
@@ -81,10 +138,28 @@ public class Main {
 		 * Pipes colors.
 		 */
 		List<Color> colors = new ArrayList<Color>();
-		do {
+		loop: do {
+			/*
+			 * Clear from previous loops.
+			 */
 			colors.clear();
+
+			/*
+			 * Select random colors.
+			 */
 			for (int c = 0; c < shares.size(); c++) {
 				colors.add(new Color((float) Math.random(), (float) Math.random(), (float) Math.random()));
+			}
+
+			/*
+			 * All colors should be different.
+			 */
+			for (int a = 0; a < colors.size(); a++) {
+				for (int b = a + 1; b < colors.size(); b++) {
+					if (colors.get(a).getRGB() == colors.get(b).getRGB()) {
+						continue loop;
+					}
+				}
 			}
 		} while (colors.contains(Color.BLACK) || colors.contains(Color.WHITE));
 
@@ -97,7 +172,7 @@ public class Main {
 		/*
 		 * Save result.
 		 */
-		BufferedImage output = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
+		output = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
 		Graphics g = output.getGraphics();
 
 		/*
@@ -145,7 +220,7 @@ public class Main {
 		/*
 		 * Flood image.
 		 */
-		for (int a = /*area - shares.size()*/63; a >= 0; a--) {
+		for (int a = /* area - shares.size() */63; a >= 0; a--) {
 			for (Color color : colors) {
 				/*
 				 * Find random proper pixel to flood.
