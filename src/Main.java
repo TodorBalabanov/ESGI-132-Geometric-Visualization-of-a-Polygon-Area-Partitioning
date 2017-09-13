@@ -75,6 +75,23 @@ public class Main {
 		 * List of color flood candidate pixels.
 		 */
 		public List<Point> candidates = new ArrayList<Point>();
+
+		Pipe(final Color color, final Point vertex1, final Point vertex2, int totalArea, double share) {
+			this.color = color;
+			this.vertex1 = vertex1;
+			this.vertex2 = vertex2;
+			this.share = share;
+
+			location = new Point((int) Math.round((vertex1.x + vertex2.x) / 2D),
+					(int) Math.round((vertex1.y + vertex2.y) / 2D));
+			area = (int) Math.round(share * totalArea / 100D);
+			occupied = 0;
+
+			/*
+			 * Start flooding from initial location.
+			 */
+			candidates.add(location);
+		}
 	}
 
 	/**
@@ -91,6 +108,11 @@ public class Main {
 	 * Output image for results reporting.
 	 */
 	private static BufferedImage output = null;
+
+	/**
+	 * Graphic context.
+	 */
+	private static Graphics g = null;
 
 	/**
 	 * Application single entry point method.
@@ -127,10 +149,10 @@ public class Main {
 		/*
 		 * Pipes coordinates.
 		 */
-		List<Point> pipes = new ArrayList<Point>();
+		List<Point> locations = new ArrayList<Point>();
 		for (int k = 0, l; k < x.size() && k < y.size(); k++) {
 			l = (k + 1) % shares.size();
-			pipes.add(new Point((int) Math.round((x.get(k) + x.get(l)) / 2D),
+			locations.add(new Point((int) Math.round((x.get(k) + x.get(l)) / 2D),
 					(int) Math.round((y.get(k) + y.get(l)) / 2D)));
 		}
 
@@ -173,7 +195,7 @@ public class Main {
 		 * Save result.
 		 */
 		output = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
-		Graphics g = output.getGraphics();
+		g = output.getGraphics();
 
 		/*
 		 * White background.
@@ -212,9 +234,9 @@ public class Main {
 		/*
 		 * Draw positions of the pipes.
 		 */
-		for (int k = 0; k < pipes.size(); k++) {
+		for (int k = 0; k < locations.size(); k++) {
 			g.setColor(colors.get(k));
-			g.drawLine(pipes.get(k).x, pipes.get(k).y, pipes.get(k).x, pipes.get(k).y);
+			g.drawLine(locations.get(k).x, locations.get(k).y, locations.get(k).x, locations.get(k).y);
 		}
 
 		/*
