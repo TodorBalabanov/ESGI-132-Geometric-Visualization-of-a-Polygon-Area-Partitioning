@@ -76,6 +76,22 @@ public class Main {
 		 */
 		public List<Point> candidates = new ArrayList<Point>();
 
+		/**
+		 * Constructor with all parameters.
+		 * 
+		 * @param color
+		 *            Color which will be used for visualization of the area associated
+		 *            with the pipe.
+		 * @param vertex1
+		 *            Point for the first side.
+		 * @param vertex2
+		 *            Point for the second side.
+		 * @param totalArea
+		 *            Total polygon area in pixels is used to calculate pipe share in
+		 *            pixels.
+		 * @param share
+		 *            Pipe share in percents.
+		 */
 		Pipe(final Color color, final Point vertex1, final Point vertex2, int totalArea, double share) {
 			this.color = color;
 			this.vertex1 = vertex1;
@@ -91,6 +107,63 @@ public class Main {
 			 * Start flooding from initial location.
 			 */
 			candidates.add(location);
+		}
+	}
+
+	/**
+	 * First flood algorithm.
+	 */
+	private static void flood1() {
+
+		/*
+		 * Draw positions of the pipes.
+		 */
+		for (Pipe pipe : pipes) {
+			g.setColor(pipe.color);
+			g.drawLine(pipe.location.x, pipe.location.y, pipe.location.x, pipe.location.y);
+		}
+
+		/*
+		 * Flood image.
+		 */
+		for (int a = /* area - shares.size() */2047; a >= 0; a--) {
+			for (Pipe pipe : pipes) {
+				/*
+				 * Find random proper pixel to flood.
+				 */
+				while (true) {
+					int i = PRNG.nextInt(output.getWidth());
+					int j = PRNG.nextInt(output.getHeight());
+
+					/*
+					 * Only black pixels can be converted to color pixels.
+					 */
+					if (output.getRGB(i, j) != Color.BLACK.getRGB()) {
+						continue;
+					}
+
+					if (i > 0 && output.getRGB(i - 1, j) == pipe.color.getRGB()) {
+						g.setColor(pipe.color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (j > 0 && output.getRGB(i, j - 1) == pipe.color.getRGB()) {
+						g.setColor(pipe.color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (i < output.getWidth() - 1 && output.getRGB(i + 1, j) == pipe.color.getRGB()) {
+						g.setColor(pipe.color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+					if (j < output.getHeight() - 1 && output.getRGB(i, j + 1) == pipe.color.getRGB()) {
+						g.setColor(pipe.color);
+						g.drawLine(i, j, i, j);
+						break;
+					}
+				}
+			}
 		}
 	}
 
@@ -147,16 +220,6 @@ public class Main {
 		}
 
 		/*
-		 * Pipes coordinates.
-		 */
-		List<Point> locations = new ArrayList<Point>();
-		for (int k = 0, l; k < x.size() && k < y.size(); k++) {
-			l = (k + 1) % shares.size();
-			locations.add(new Point((int) Math.round((x.get(k) + x.get(l)) / 2D),
-					(int) Math.round((y.get(k) + y.get(l)) / 2D)));
-		}
-
-		/*
 		 * Pipes colors.
 		 */
 		List<Color> colors = new ArrayList<Color>();
@@ -186,12 +249,6 @@ public class Main {
 		} while (colors.contains(Color.BLACK) || colors.contains(Color.WHITE));
 
 		/*
-		 * Generate polygon.
-		 */
-		Polygon polygon = new Polygon(x.stream().mapToInt(Integer::intValue).toArray(),
-				y.stream().mapToInt(Integer::intValue).toArray(), shares.size());
-
-		/*
 		 * Save result.
 		 */
 		output = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_RGB);
@@ -202,6 +259,12 @@ public class Main {
 		 */
 		g.setColor(Color.WHITE);
 		g.fillRect(0, 0, output.getWidth(), output.getHeight());
+
+		/*
+		 * Generate polygon.
+		 */
+		Polygon polygon = new Polygon(x.stream().mapToInt(Integer::intValue).toArray(),
+				y.stream().mapToInt(Integer::intValue).toArray(), shares.size());
 
 		/*
 		 * Black initial area.
@@ -223,64 +286,15 @@ public class Main {
 		}
 
 		/*
-		 * Recalculate shares in pixels.
+		 * Fill pipes structure.
 		 */
-		int index = 0;
-		int areas[] = new int[shares.size()];
-		for (Double share : shares) {
-			areas[index++] = (int) Math.round(share * area / 100D);
+		for (int k = 0, l; k < shares.size(); k++) {
+			l = (k + 1) % shares.size();
+			pipes.add(new Pipe(colors.get(k), new Point(x.get(k), y.get(k)), new Point(x.get(l), y.get(l)), area,
+					shares.get(k)));
 		}
 
-		/*
-		 * Draw positions of the pipes.
-		 */
-		for (int k = 0; k < locations.size(); k++) {
-			g.setColor(colors.get(k));
-			g.drawLine(locations.get(k).x, locations.get(k).y, locations.get(k).x, locations.get(k).y);
-		}
-
-		/*
-		 * Flood image.
-		 */
-		for (int a = /* area - shares.size() */63; a >= 0; a--) {
-			for (Color color : colors) {
-				/*
-				 * Find random proper pixel to flood.
-				 */
-				while (true) {
-					int i = PRNG.nextInt(output.getWidth());
-					int j = PRNG.nextInt(output.getHeight());
-
-					/*
-					 * Only black pixels can be converted to color pixels.
-					 */
-					if (output.getRGB(i, j) != Color.BLACK.getRGB()) {
-						continue;
-					}
-
-					if (i > 0 && output.getRGB(i - 1, j) == color.getRGB()) {
-						g.setColor(color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (j > 0 && output.getRGB(i, j - 1) == color.getRGB()) {
-						g.setColor(color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (i < output.getWidth() - 1 && output.getRGB(i + 1, j) == color.getRGB()) {
-						g.setColor(color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (j < output.getHeight() - 1 && output.getRGB(i, j + 1) == color.getRGB()) {
-						g.setColor(color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-				}
-			}
-		}
+		flood1();
 
 		/*
 		 * Store current image in an image file.
