@@ -31,84 +31,24 @@ import org.json.simple.parser.ParseException;
 public class Main {
 
 	/**
-	 * Pipe description.
-	 * 
-	 * @author Todor Balabanov
+	 * Pseudo-random number generator.
 	 */
-	private static class Pipe {
-		/**
-		 * Area visualization color.
-		 */
-		public Color color = Color.WHITE;
+	private final static Random PRNG = new Random();
 
-		/**
-		 * Location of the pipe is in the middle of the polygon side.
-		 */
-		public Point location = new Point(0, 0);
+	/**
+	 * List of pipes.
+	 */
+	private static List<Pipe> pipes = new ArrayList<Pipe>();
 
-		/**
-		 * First vertex of the polygon side.
-		 */
-		public Point vertex1 = new Point(0, 0);
+	/**
+	 * Output image for results reporting.
+	 */
+	private static BufferedImage output = null;
 
-		/**
-		 * Second vertex of the polygon side.
-		 */
-		public Point vertex2 = new Point(0, 0);
-
-		/**
-		 * Pipe share in percentage of the total amount.
-		 */
-		public double share = 0;
-
-		/**
-		 * Maximum allowed area in pixels.
-		 */
-		public int area = 0;
-
-		/**
-		 * Current occupied area in pixels.
-		 */
-		public int occupied = 0;
-
-		/**
-		 * List of color flood candidate pixels.
-		 */
-		public List<Point> candidates = new ArrayList<Point>();
-
-		/**
-		 * Constructor with all parameters.
-		 * 
-		 * @param color
-		 *            Color which will be used for visualization of the area associated
-		 *            with the pipe.
-		 * @param vertex1
-		 *            Point for the first side.
-		 * @param vertex2
-		 *            Point for the second side.
-		 * @param totalArea
-		 *            Total polygon area in pixels is used to calculate pipe share in
-		 *            pixels.
-		 * @param share
-		 *            Pipe share in percents.
-		 */
-		Pipe(final Color color, final Point vertex1, final Point vertex2, int totalArea, double share) {
-			this.color = color;
-			this.vertex1 = vertex1;
-			this.vertex2 = vertex2;
-			this.share = share;
-
-			location = new Point((int) Math.round((vertex1.x + vertex2.x) / 2D),
-					(int) Math.round((vertex1.y + vertex2.y) / 2D));
-			area = (int) Math.round(share * totalArea / 100D);
-			occupied = 0;
-
-			/*
-			 * Start flooding from initial location.
-			 */
-			candidates.add(location);
-		}
-	}
+	/**
+	 * Graphic context.
+	 */
+	private static Graphics g = null;
 
 	/**
 	 * First flood algorithm.
@@ -168,24 +108,121 @@ public class Main {
 	}
 
 	/**
-	 * Pseudo-random number generator.
+	 * Add more candidates on the boundaries.
+	 * 
+	 * @param pipe
+	 *            Pipe to be checked.
 	 */
-	private final static Random PRNG = new Random();
+	private static void boundaries(Pipe pipe) {
+		for (int j = 1; j < output.getHeight() - 1; j++) {
+			for (int i = 1; i < output.getWidth() - 1; i++) {
+				/*
+				 * It should be part of this pipe area.
+				 */
+				if (output.getRGB(i, j) != pipe.color.getRGB()) {
+					continue;
+				}
+
+				/*
+				 * Check for empty neighbors.
+				 */
+				if (output.getRGB(i - 1, j) == Color.BLACK.getRGB()) {
+					pipe.candidates.add(new Point(i - 1, j));
+				}
+				if (output.getRGB(i, j - 1) == Color.BLACK.getRGB()) {
+					pipe.candidates.add(new Point(i, j - 1));
+				}
+				if (output.getRGB(i + 1, j) == Color.BLACK.getRGB()) {
+					pipe.candidates.add(new Point(i + 1, j));
+				}
+				if (output.getRGB(i, j + 1) == Color.BLACK.getRGB()) {
+					pipe.candidates.add(new Point(i, j + 1));
+				}
+			}
+		}
+	}
 
 	/**
-	 * List of pipes.
+	 * Do Monte-Carlo flooding step.
+	 * 
+	 * @return True if a step was done, false otherwise.
 	 */
-	private static List<Pipe> pipes = new ArrayList<Pipe>();
+	private static boolean step() {
+		boolean result = false;
+
+		/*
+		 * Draw position of pipes areas.
+		 */
+		for (Pipe pipe : pipes) {
+			/*
+			 * Do nothing if the share of this pipe is complete.
+			 */
+			if (pipe.occupied >= pipe.area) {
+				continue;
+			}
+
+			/*
+			 * If there is no candidates check the boundaries.
+			 */
+			if (pipe.candidates.size() <= 0) {
+				boundaries(pipe);
+
+				/*
+				 * If there is no candidate pixels do nothing.
+				 */
+				if (pipe.candidates.size() <= 0) {
+					continue;
+				}
+			}
+
+			/*
+			 * Select random pixel to flood.
+			 */
+			Point next = pipe.candidates.get(PRNG.nextInt(pipe.candidates.size()));
+			pipe.candidates.remove(next);
+
+			/*
+			 * Change color only for unused pixels.
+			 */
+			if (output.getRGB(next.x, next.y) == Color.BLACK.getRGB()
+					|| output.getRGB(next.x, next.y) == Color.WHITE.getRGB()) {
+				g.setColor(pipe.color);
+				g.drawLine(next.x, next.y, next.x, next.y);
+				pipe.occupied++;
+			}
+
+			/*
+			 * Add neighbors for next flooding steps.
+			 */
+			if (next.x > 0 && output.getRGB(next.x - 1, next.y) == Color.BLACK.getRGB()) {
+				pipe.candidates.add(new Point(next.x - 1, next.y));
+			}
+			if (next.y > 0 && output.getRGB(next.x, next.y - 1) == Color.BLACK.getRGB()) {
+				pipe.candidates.add(new Point(next.x, next.y - 1));
+			}
+			if (next.x < output.getWidth() - 1 && output.getRGB(next.x + 1, next.y) == Color.BLACK.getRGB()) {
+				pipe.candidates.add(new Point(next.x + 1, next.y));
+			}
+			if (next.y < output.getHeight() - 1 && output.getRGB(next.x, next.y + 1) == Color.BLACK.getRGB()) {
+				pipe.candidates.add(new Point(next.x, next.y + 1));
+			}
+
+			/*
+			 * Step was done.
+			 */
+			result = true;
+		}
+
+		return result;
+	}
 
 	/**
-	 * Output image for results reporting.
+	 * Second flood algorithm.
 	 */
-	private static BufferedImage output = null;
-
-	/**
-	 * Graphic context.
-	 */
-	private static Graphics g = null;
+	private static void flood2() {
+		while (step() == true) {
+		}
+	}
 
 	/**
 	 * Application single entry point method.
@@ -199,7 +236,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in02.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in05.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -294,7 +331,8 @@ public class Main {
 					shares.get(k)));
 		}
 
-		flood1();
+		// flood1();
+		flood2();
 
 		/*
 		 * Store current image in an image file.
