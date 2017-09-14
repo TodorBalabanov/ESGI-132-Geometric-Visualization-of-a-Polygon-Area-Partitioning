@@ -146,11 +146,11 @@ public class Main {
 	 * Do Monte-Carlo flooding step.
 	 * 
 	 * @param refine
-	 *            Refine percent of candidates.
+	 *            Refine number of candidates.
 	 * 
 	 * @return True if a step was done, false otherwise.
 	 */
-	private static boolean step(double refine) {
+	private static boolean step(int refine) {
 		boolean result = false;
 
 		/*
@@ -182,7 +182,7 @@ public class Main {
 			 * Select random pixel to flood.
 			 */
 			Point next = pipe.candidates.get(PRNG.nextInt(pipe.candidates.size()));
-			for (int r = (int) (refine * pipe.candidates.size() / 100D); r > 0; r--) {
+			for (int r = refine; r > 0; r--) {
 				Point alternative = pipe.candidates.get(PRNG.nextInt(pipe.candidates.size()));
 				if (alternative.distance(pipe.location) < next.distance(pipe.location)) {
 					next = alternative;
@@ -230,9 +230,9 @@ public class Main {
 	 * 
 	 * @param refine
 	 *            How many random attempts to be done in order to refine the
-	 *            selection. It is in percent.
+	 *            selection.
 	 */
-	private static void flood2(double refine) {
+	private static void flood2(int refine) {
 		while (step(refine) == true) {
 		}
 	}
@@ -249,7 +249,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in02.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in03.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -345,7 +345,7 @@ public class Main {
 		}
 
 		// flood1();
-		flood2(50D);
+		flood2(0);
 
 		/*
 		 * Store current image in an image file.
