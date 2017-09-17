@@ -9,8 +9,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -49,63 +51,6 @@ public class Main {
 	 * Graphic context.
 	 */
 	private static Graphics g = null;
-
-	/**
-	 * First flood algorithm.
-	 */
-	private static void flood1() {
-
-		/*
-		 * Draw positions of the pipes.
-		 */
-		for (Pipe pipe : pipes) {
-			g.setColor(pipe.color);
-			g.drawLine(pipe.location.x, pipe.location.y, pipe.location.x, pipe.location.y);
-		}
-
-		/*
-		 * Flood image.
-		 */
-		for (int a = /* area - shares.size() */2047; a >= 0; a--) {
-			for (Pipe pipe : pipes) {
-				/*
-				 * Find random proper pixel to flood.
-				 */
-				while (true) {
-					int i = PRNG.nextInt(output.getWidth());
-					int j = PRNG.nextInt(output.getHeight());
-
-					/*
-					 * Only black pixels can be converted to color pixels.
-					 */
-					if (output.getRGB(i, j) != Color.BLACK.getRGB()) {
-						continue;
-					}
-
-					if (i > 0 && output.getRGB(i - 1, j) == pipe.color.getRGB()) {
-						g.setColor(pipe.color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (j > 0 && output.getRGB(i, j - 1) == pipe.color.getRGB()) {
-						g.setColor(pipe.color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (i < output.getWidth() - 1 && output.getRGB(i + 1, j) == pipe.color.getRGB()) {
-						g.setColor(pipe.color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-					if (j < output.getHeight() - 1 && output.getRGB(i, j + 1) == pipe.color.getRGB()) {
-						g.setColor(pipe.color);
-						g.drawLine(i, j, i, j);
-						break;
-					}
-				}
-			}
-		}
-	}
 
 	/**
 	 * Add more candidates on the boundaries.
@@ -232,8 +177,76 @@ public class Main {
 	 *            How many random attempts to be done in order to refine the
 	 *            selection.
 	 */
-	private static void flood2(int refine) {
+	private static void flood(int refine) {
 		while (step(refine) == true) {
+		}
+	}
+
+	/**
+	 * Transform the picture in squares.
+	 * 
+	 * @param side
+	 *            Square side size.
+	 */
+	private static void squareization(int side) {
+		/*
+		 * Step on each square.
+		 */
+		for (int a = 0; a < output.getHeight(); a += side) {
+			for (int b = 0; b < output.getWidth(); b += side) {
+				Map<Integer, Integer> counters = new HashMap<Integer, Integer>();
+
+				/*
+				 * Count all colors.
+				 */
+				for (int j = a; j < a + side && j < output.getHeight(); j++) {
+					for (int i = b; i < b + side && i < output.getWidth(); i++) {
+						int pixel = output.getRGB(i, j);
+
+						/*
+						 * Do not count the white color.
+						 */
+						if (pixel == Color.WHITE.getRGB()) {
+							continue;
+						}
+
+						if (counters.containsKey(pixel) == false) {
+							counters.put(pixel, 1);
+						} else {
+							counters.put(pixel, counters.get(pixel) + 1);
+						}
+					}
+				}
+
+				/*
+				 * Find the most presented color.
+				 */
+				int max = 0;
+				int color = output.getRGB(a, b);
+				for (Integer key : counters.keySet()) {
+					if (counters.get(key) > max) {
+						color = key;
+						max = counters.get(key);
+					}
+				}
+
+				/*
+				 * Occupy the square.
+				 */
+				g.setColor(new Color(color));
+				for (int j = a; j < a + side && j < output.getHeight(); j++) {
+					for (int i = b; i < b + side && i < output.getWidth(); i++) {
+						/*
+						 * Do not change pixels with white color.
+						 */
+						if (output.getRGB(i, j) == Color.WHITE.getRGB()) {
+							continue;
+						}
+
+						g.drawLine(i, j, i, j);
+					}
+				}
+			}
 		}
 	}
 
@@ -249,7 +262,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in03.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in02.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -344,8 +357,9 @@ public class Main {
 					shares.get(k)));
 		}
 
-		// flood1();
-		flood2(0);
+		flood(0);
+
+		// squareization(10);
 
 		/*
 		 * Store current image in an image file.
