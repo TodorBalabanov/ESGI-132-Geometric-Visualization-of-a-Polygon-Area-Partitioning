@@ -88,6 +88,23 @@ public class Main {
 	}
 
 	/**
+	 * Distance between line AB and point P.
+	 * 
+	 * @param a
+	 *            First end of the line.
+	 * @param b
+	 *            Second end of the line.
+	 * @param p
+	 *            Point in 2D space.
+	 * 
+	 * @return Distance between the point and the line.
+	 */
+	private static double distance(Point a, Point b, Point p) {
+		double normal = Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+		return Math.abs((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x)) / normal;
+	}
+
+	/**
 	 * Do Monte-Carlo flooding step.
 	 * 
 	 * @param refine
@@ -129,7 +146,17 @@ public class Main {
 			Point next = pipe.candidates.get(PRNG.nextInt(pipe.candidates.size()));
 			for (int r = refine; r > 0; r--) {
 				Point alternative = pipe.candidates.get(PRNG.nextInt(pipe.candidates.size()));
-				if (alternative.distance(pipe.location) < next.distance(pipe.location)) {
+
+				/*
+				 * Distance to the line.
+				 */
+				double distance1 = distance(pipe.vertex1, pipe.vertex2, alternative);
+				double distance2 = distance(pipe.vertex1, pipe.vertex2, next);
+				
+				if (distance1 < distance2) {
+					next = alternative;
+				} else if (distance1 == distance2
+						&& alternative.distance(pipe.location) < next.distance(pipe.location)) {
 					next = alternative;
 				}
 			}
@@ -262,7 +289,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in02.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in04.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -358,8 +385,6 @@ public class Main {
 		}
 
 		flood(0);
-
-		// squareization(10);
 
 		/*
 		 * Store current image in an image file.
