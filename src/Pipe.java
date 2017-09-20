@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,18 +51,23 @@ class Pipe {
 	public List<Point> candidates = new ArrayList<Point>();
 
 	/**
+	 * It is used in genetic algorithm to adjust polygon vertices.
+	 */
+	public Polygon polygon = new Polygon();
+
+	/**
 	 * Constructor with all parameters.
 	 * 
 	 * @param color
-	 *            Color which will be used for visualization of the area associated
-	 *            with the pipe.
+	 *            Color which will be used for visualization of the area
+	 *            associated with the pipe.
 	 * @param vertex1
 	 *            Point for the first side.
 	 * @param vertex2
 	 *            Point for the second side.
 	 * @param totalArea
-	 *            Total polygon area in pixels is used to calculate pipe share in
-	 *            pixels.
+	 *            Total polygon area in pixels is used to calculate pipe share
+	 *            in pixels.
 	 * @param share
 	 *            Pipe share in percents.
 	 */

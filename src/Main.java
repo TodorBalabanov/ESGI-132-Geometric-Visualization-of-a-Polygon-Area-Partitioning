@@ -3,22 +3,17 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -152,7 +147,7 @@ public class Main {
 				 */
 				double distance1 = distance(pipe.vertex1, pipe.vertex2, alternative);
 				double distance2 = distance(pipe.vertex1, pipe.vertex2, next);
-				
+
 				if (distance1 < distance2) {
 					next = alternative;
 				} else if (distance1 == distance2
@@ -384,7 +379,9 @@ public class Main {
 					shares.get(k)));
 		}
 
-		flood(0);
+		// flood(0);
+		GeneticAlgorithmSolver ga = new GeneticAlgorithmSolver(37, 0.9, 0.01, 2, 0.1, 60);
+		ga.solve(polygon, pipes);
 
 		/*
 		 * Store current image in an image file.
