@@ -10,6 +10,7 @@ import java.util.List;
  * @author Todor Balabanov
  */
 class Pipe {
+	
 	/**
 	 * Area visualization color.
 	 */

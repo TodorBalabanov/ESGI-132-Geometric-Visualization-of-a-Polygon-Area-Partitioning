@@ -200,6 +200,11 @@ public class Main {
 	 *            selection.
 	 */
 	private static void flood(int refine) {
+		for (Pipe pipe : pipes) {
+			g.setColor(pipe.color);
+			g.drawLine(pipe.vertex1.x, pipe.vertex1.y, pipe.vertex2.x, pipe.vertex2.y);
+		}
+
 		while (step(refine) == true) {
 		}
 	}
@@ -284,7 +289,7 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in04.json"));
+		JSONObject json = (JSONObject) parser.parse(new FileReader("./dat/in03.json"));
 
 		/*
 		 * Read polygon vertices.
@@ -380,8 +385,19 @@ public class Main {
 		}
 
 		// flood(0);
+
 		GeneticAlgorithmSolver ga = new GeneticAlgorithmSolver(37, 0.9, 0.01, 2, 0.1, 60);
-		ga.solve(polygon, pipes);
+		List<List<Point>> solution = ga.solve(polygon, pipes);
+		int index = 0;
+		for (List<Point> points : solution) {
+			Polygon shape = new Polygon();
+			for (Point vertex : points) {
+				shape.addPoint(vertex.x, vertex.y);
+			}
+			g.setColor(pipes.get(index++).color);
+			g.drawPolygon(shape);
+			g.fillPolygon(shape);
+		}
 
 		/*
 		 * Store current image in an image file.
